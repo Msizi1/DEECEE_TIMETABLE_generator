@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DEECE TIMETABLE 2026</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: Arial, sans-serif; }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #667eea;
+        }
+        
+        h1 {
+            font-size: 32px;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .subtitle {
+            color: #7f8c8d;
+            font-size: 16px;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin-bottom: 25px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        select, button {
+            padding: 12px 20px;
+            font-size: 15px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+        
+        select {
+            flex: 1;
+            min-width: 200px;
+            background: white;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+        }
+        
+        #timetableArea {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+            border: 2px solid #000;
+        }
+        
+        th, td {
+            border: 1px solid #000;
+            padding: 10px;
+            text-align: center;
+        }
+        
+        .time-header {
+            background: linear-gradient(135deg, #2c3e50, #3498db);
+            color: white;
+            font-weight: bold;
+        }
+        
+        .day-header {
+            background: linear-gradient(135deg, #34495e, #2c3e50);
+            color: white;
+            font-weight: bold;
+            text-align: left;
+        }
+        
+        .slot-A { background: #cce5ff; }
+        .slot-B { background: #d4edda; }
+        .slot-C { background: #fff3cd; }
+        .slot-D { background: #f8d7da; }
+        .slot-E { background: #e2d4f7; }
+        .slot-F { background: #d1ecf1; }
+        
+        .break-cell {
+            background: #ecf0f1;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+        
+        .course-code { font-weight: bold; color: #2c3e50; display: block; }
+        .course-name { font-style: italic; color: #555; display: block; }
+        .lecturer { color: #e74c3c; font-weight: bold; display: block; }
+        .room { color: #27ae60; font-size: 11px; display: block; }
+        
+        .footer {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 13px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>DEECE TIMETABLE 2026</h1>
+            <div class="subtitle">Department of Electrical, Electronic and Computer Engineering</div>
+        </div>
+        
+        <div class="controls">
+            <select id="yearSelect" onchange="updateFields()">
+                <option value="">Select Year</option>
+                <option value="Year 0"> Year 0</option>
+                <option value="First Year">First Year</option>
+                <option value="Second Year">Second Year</option>
+                <option value="Third Year">Third Year</option>
+            </select>
+            
+            <select id="fieldSelect" onchange="updateGroups()">
+                <option value="">Select Field</option>
+            </select>
+            
+            <select id="groupSelect" onchange="loadTimetable()">
+                <option value="">Select Group</option>
+            </select>
+            
+            <button onclick="downloadPDF()">Download PDF</button>
+        </div>
+        
+        <div id="timetableArea"></div>
+    </div>
+
+    <script>
+        const DATA = {
+        "D2ENCE_Y1_A": {
+                "name": "D2ENCE - Computer Systems",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "COM 152S Engineer Comm 1/",
+                                "HARTMAN MONDAY ONLY",
+                                "ROOM 1 GENCO",
+                                "CES 150S COMP. ENG. SKIL",
+                                "ADONIS MT",
+                                "COMP A1.36 BLOCK A"
+                        ],
+                        "B": [
+                                "ELE 150S",
+                                "Electrical Engineering 1",
+                                "NKOMO",
+                                "ROOM 1 GENCO"
+                        ],
+                        "C": [
+                                "EMA151S",
+                                "Engineering Maths 1",
+                                "MUSI/ SEDEBO",
+                                "ROOM 1 GENCO"
+                        ],
+                        "D": [
+                                "ELC 150S",
+                                "Electronics 1",
+                                "MOTSAATHEBE",
+                                "ROOM 1 GENCO"
+                        ],
+                        "E": [],
+                        "F": [
+                                "EPH150S",
+                                "Engineering Physics 1",
+                                "ALMAKTOOF",
+                                "ROOM 1"
+                        ]
+                }
+        },
+        "D2ENCE_Y1_B": {
+                "name": "D2ENCE - Computer Engineering",
+                "year": "First Year",
+                "group": "B",
+                "slots": {
+                        "A": [],
+                        "B": [
+                                "ELC 150SS",
+                                "Electronics 1",
+                                "ABRAHAMS",
+                                "ROOM 0212 GOLDFIELD"
+                        ],
+                        "C": [
+                                "EPH150S",
+                                "Engineering Physics 1",
+                                "ALMAKTOOF",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "D": [
+                                "EMA151S",
+                                "Engineering Maths 1",
+                                "MABUDA/SEDEBO",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "E": [
+                                "ELE 150S",
+                                "Electrical Engineer 1",
+                                "AYELESO",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "F": [
+                                "COM 152S Engineer Communic1",
+                                "HARTMAN FRIDAY ONLY",
+                                "ROOM 2 GENCO",
+                                "CES150S COMP. ENG. SKIL",
+                                "MOYO",
+                                "COMP A1.36 BLOCK A"
+                        ]
+                }
+        },
+        "D2ETEE_Y1_A": {
+                "name": "D2ETEE - Electrical Engineering",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "ELE 152S",
+                                "Electrical Engineering 1",
+                                "NKOMO",
+                                "ROOM 2 GENCO"
+                        ],
+                        "B": [
+                                "EPH 151S",
+                                "Physics",
+                                "BASHIR",
+                                "ROOM 2 GENCO"
+                        ],
+                        "C": [
+                                "ELC152S",
+                                "Electronics 1",
+                                "NGOBENI",
+                                "ROOM 2 GENCO"
+                        ],
+                        "D": [
+                                "COM 155S Eng Communication 1",
+                                "MOHAMED WEDNESDAY ONLY ROOM 1 GENCO",
+                                "Engineering Skill 1",
+                                "LOKAILWE/JOOSTE",
+                                "PROJECT LABS"
+                        ],
+                        "E": [
+                                "EMA 155S",
+                                "Engineering",
+                                "Mathematics 1",
+                                "MCINGANI/SEDEBO",
+                                "ROOM 2 GENCO"
+                        ],
+                        "F": [
+                                "EES 150S",
+                                "Engineering Skills 1",
+                                "LOKAILWE/ZWANE",
+                                "PROJECT LAB",
+                                "THURSDAY (ONLY)"
+                        ]
+                }
+        },
+        "D2ETEE_Y1_B": {
+                "name": "D2ETEE - Electrical Engineering",
+                "year": "First Year",
+                "group": "B",
+                "slots": {
+                        "A": [
+                                "ELC152S",
+                                "Electronics 1",
+                                "KHETLA",
+                                "ROOM 0208 GOLDFIELD"
+                        ],
+                        "B": [
+                                "EMA 155S",
+                                "Engineering",
+                                "Mathematics 1",
+                                "MCINGANA/SEDEBO",
+                                "ROOM 0208 GOLDFIELD"
+                        ],
+                        "C": [
+                                "ELE 152S",
+                                "Electrical Engineering 1",
+                                "AYELESO",
+                                "ROOM 0208 GOLDFIELD"
+                        ],
+                        "D": [],
+                        "E": [
+                                "EPH 151S",
+                                "Physics",
+                                "BASHIR",
+                                "ROOM 0208 GOLDFIELD"
+                        ],
+                        "F": [
+                                "COM 155S Eng Commun 1",
+                                "MOHAMED FRIDAY ONLY    ROOM 0212 GOLDFIELD",
+                                "EES 150S",
+                                "Engineering Skill 1",
+                                "ZWANE/LUMINA",
+                                "ROOMS 0022/0123 GOLDFIELD/PROJECT LAB"
+                        ]
+                }
+        },
+        "D2ENCE_Y2_A": {
+                "name": "D2ENCE - Computer Systems",
+                "year": "Second Year",
+                "group": "A",
+                "slots": {
+                        "A": [],
+                        "B": [
+                                "PSC 260S",
+                                "Process Control 2",
+                                "MAGAGULA",
+                                "ROOM 130 GOLDFIELD"
+                        ],
+                        "C": [
+                                "COM 260S",
+                                "Digital Comm.  2",
+                                "LOKAILWE",
+                                "GENCO ROOM 3"
+                        ],
+                        "D": [
+                                "SFD 260S",
+                                "Software Development 2",
+                                "LUBBE",
+                                "GENCO C-Room 1,2,3,4"
+                        ],
+                        "E": [
+                                "EMA260S",
+                                "Engineering Maths 2",
+                                "NKOSI",
+                                "OLD MASTERS"
+                        ],
+                        "F": [
+                                "SSA260S",
+                                "System Analysis 2",
+                                "EKWE",
+                                "MACHINES CR 0012"
+                        ]
+                }
+        },
+        "D2ENCE_Y2_B": {
+                "name": "D2ENCE - Computer Engineering",
+                "year": "Second Year",
+                "group": "B",
+                "slots": {
+                        "A": [
+                                "SSA260S",
+                                "System Analysis 2",
+                                "EKWE",
+                                "ROOM123 GOLDFIELD"
+                        ],
+                        "B": [
+                                "COM 260S",
+                                "Digital Comm.  2",
+                                "LOKAILWE",
+                                "ROOM123 GOLDFIELD"
+                        ],
+                        "C": [
+                                "EMA260S",
+                                "Engineering Maths 2",
+                                "NKOSI",
+                                "ROOM123 GOLDFIELD"
+                        ],
+                        "D": [
+                                "SFD 260S",
+                                "Software Development 2",
+                                "LUBBE",
+                                "GENCO C-Room 1,2,3,4"
+                        ],
+                        "E": [
+                                "PSC 260S",
+                                "Process Control 2",
+                                "MAGAGULA",
+                                "ROOM123 GOLDFIELD"
+                        ],
+                        "F": []
+                }
+        },
+        "D2ETEE_Y2_A": {
+                "name": "D2ETEE - Electrical Engineering",
+                "year": "Second Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "POS 260S",
+                                "Power Systems 2",
+                                "MAGAGULA",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "B": [
+                                "SFD261S",
+                                "Software Develop.  2",
+                                "MOYO",
+                                "C ROOM1,2, 3,4"
+                        ],
+                        "C": [],
+                        "D": [
+                                "COM 261",
+                                "Comm.  Systems 2",
+                                "GUPTA",
+                                "ROOM 0208 GOLDFIELD"
+                        ],
+                        "E": [
+                                "PSC 261S",
+                                "Process Control 2",
+                                "MNGUNI",
+                                "ROOM 1 GENCO"
+                        ],
+                        "F": [
+                                "EMA263S",
+                                "Engineering Maths 2",
+                                "NKOSI",
+                                "ROOM 2 GENCO"
+                        ]
+                }
+        },
+        "D2ETEE_Y2_B": {
+                "name": "D2ETEE - Electrical Engineering",
+                "year": "Second Year",
+                "group": "B",
+                "slots": {
+                        "A": [
+                                "EMA263S",
+                                "Engineering Maths 2",
+                                "NKOSI",
+                                "ROOM 1 GENCO"
+                        ],
+                        "B": [
+                                "COM 261",
+                                "Comm.  Systems 2",
+                                "GUPTA",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "C": [
+                                "POS 260S",
+                                "Power Systems 2",
+                                "LUMINA",
+                                "ROOM 0204 GOLDFIELD"
+                        ],
+                        "D": [
+                                "PSC 261S",
+                                "Process Control 2",
+                                "TSHINAVHE",
+                                "COMP ROOMS GOLDFIELD"
+                        ],
+                        "E": [
+                                "SFD261S",
+                                "Software Develop.  2",
+                                "KRIGER",
+                                "C ROOM 1,2"
+                        ],
+                        "F": []
+                }
+        },
+        "D2ETEE_Y2_C": {
+                "name": "D2ETEE - Electrical Engineering",
+                "year": "Second Year",
+                "group": "C",
+                "slots": {
+                        "A": [],
+                        "B": [
+                                "SFD261S",
+                                "Software Develop.  2",
+                                "MOYO",
+                                "C ROOM 1,2,3,4"
+                        ],
+                        "C": [
+                                "COM 261",
+                                "Comm.  Systems 2",
+                                "GUPTA",
+                                "GENCO ROOM 4"
+                        ],
+                        "D": [
+                                "EMA263S",
+                                "Engineering Maths 2",
+                                "NKOSI",
+                                "GENCO ROOM 2"
+                        ],
+                        "E": [
+                                "POS 260S",
+                                "Power Systems 2",
+                                "LUMINA",
+                                "GENCO ROOM 4"
+                        ],
+                        "F": [
+                                "PSC 261S",
+                                "Process Control 2",
+                                "TSHINAVHE/XXXXXXX",
+                                "ROOM 0208 GOLDFIELD"
+                        ]
+                }
+        },
+        "BPEETE_Y1_A": {
+                "name": "BPEETE - Electrical",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "ELC 151S",
+                                "Electronics 1",
+                                "AMINOU",
+                                "MACHINES CR 0012"
+                        ],
+                        "B": [
+                                "ELE 151S",
+                                "Electrical Engineering 1",
+                                "LUMINA",
+                                "MACHINES CR 0012"
+                        ],
+                        "C": [
+                                "ESK 150S",
+                                "Electrical Eng.  Skill 1",
+                                "MOFOKENG & MERU",
+                                "MACHINES CR 0012"
+                        ],
+                        "D": [
+                                "EMA 157S",
+                                "Eng. Maths 1",
+                                "TSHITENGE/MATAIFA",
+                                "MACHINES CR 0012"
+                        ],
+                        "E": [
+                                "PHY 156S",
+                                "Physics",
+                                "PATEL",
+                                "MACHINES CR 0012"
+                        ],
+                        "F": []
+                }
+        },
+        "BPEETE_Y1_B": {
+                "name": "BPEETE - Electrical",
+                "year": "First Year",
+                "group": "B",
+                "slots": {
+                        "A": [
+                                "ELE 151S",
+                                "Electrical Engineering 1",
+                                "MANANGA",
+                                "ROOM 0212 GOLDFIELD"
+                        ],
+                        "B": [],
+                        "C": [
+                                "PHY 156S",
+                                "Physics",
+                                "PATEL",
+                                "ROOM 0212 GOLDFIELD"
+                        ],
+                        "D": [
+                                "ESK 150S",
+                                "Electrical Eng.  Skill 1",
+                                "MERU & ROSE",
+                                "ROOM 0212 GOLDFIELD"
+                        ],
+                        "E": [
+                                "EMA 157S",
+                                "Eng. Maths 1",
+                                "TSHITENGE/NKOSI",
+                                "ROOM 0212 GOLDFIELD"
+                        ],
+                        "F": [
+                                "ELC 151S",
+                                "Electronics 1",
+                                "AMINOU",
+                                "ROOM 0212 GOLDFIELD"
+                        ]
+                }
+        },
+        "BPETCP_Y1_A": {
+                "name": "BPETCP - ComputerSystem",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "PHY 157S",
+                                "Physics",
+                                "MHLONGO",
+                                "ROOM 4 GENCO"
+                        ],
+                        "B": [
+                                "EMA 156S",
+                                "Engineering Maths 1",
+                                "TSHITENGE/NKOSI",
+                                "ROOM 4 GENCO"
+                        ],
+                        "C": [
+                                "SDN 150S",
+                                "Software Design 1",
+                                "EKWE",
+                                "C-Room 1,2,3,4"
+                        ],
+                        "D": [
+                                "ELC 153S",
+                                "Electronics 1",
+                                "MANANGA",
+                                "ROOM 3 GENCO"
+                        ],
+                        "E": [],
+                        "F": [
+                                "EEP150S",
+                                "Electrical Eng. Principle 1",
+                                "WHEELER (FT &PT)",
+                                "ROOM 4 GENCO"
+                        ]
+                }
+        },
+        "BPETCP_Y1_B": {
+                "name": "BPETCP - ComputerSystem",
+                "year": "First Year",
+                "group": "B",
+                "slots": {
+                        "A": [
+                                "EMA 156S",
+                                "Engineering Maths 1",
+                                "MATAIFA / TSHITENGE",
+                                "ROOM 3 GENCO"
+                        ],
+                        "B": [],
+                        "C": [
+                                "SDN 150S",
+                                "Software Design 1",
+                                "EKWE",
+                                "C-Room 1,2,3,4"
+                        ],
+                        "D": [
+                                "EEP150S",
+                                "Electrical Eng. Principle 1",
+                                "WHEELER (FT &PT)",
+                                "ROOM 4 GENCO"
+                        ],
+                        "E": [
+                                "ELC 153S",
+                                "Electronics 1",
+                                "MANANGA",
+                                "ROOM 3 GENCO"
+                        ],
+                        "F": [
+                                "PHY 157S",
+                                "Physics",
+                                "MABUDA",
+                                "ROOM 3 GENCO"
+                        ]
+                }
+        },
+        "BPETEE_Y2_A": {
+                "name": "BPETEE - Electrical",
+                "year": "Second Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "SEG 260S Software Engineering 2",
+                                "BART(S1)",
+                                "KRIGER (S2)",
+                                "C-Room 1,2,3,4 GENCO"
+                        ],
+                        "B": [
+                                "COM 250S",
+                                "Engineering Comms2",
+                                "EKRON",
+                                "LECTUTURE THEAT"
+                        ],
+                        "C": [
+                                "DIG260S",
+                                "Digital Systems 2",
+                                "CALLAGHAN",
+                                "RM A1.43, A1.01BLOCK A"
+                        ],
+                        "D": [
+                                "DNT 260S",
+                                "Data Networks  2",
+                                "BALYAN",
+                                "LECTUTURE THEAT"
+                        ],
+                        "E": [],
+                        "F": [
+                                "EMA261S",
+                                "Engineering Maths 2",
+                                "TSHITENGE",
+                                "LECTUTURE THEAT"
+                        ]
+                }
+        },
+        "BPETCP_Y2_A": {
+                "name": "BPETCP - Computer",
+                "year": "Second Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "COM 251S",
+                                "Engineering Comms2",
+                                "EKRON",
+                                "LECTUTURE THEAT"
+                        ],
+                        "B": [],
+                        "C": [
+                                "EMA265S",
+                                "Engineering Maths 2",
+                                "TSHITENGE",
+                                "LECTUTURE THEAT"
+                        ],
+                        "D": [
+                                "CGD 260S",
+                                "Computer Graphic 2",
+                                "ADONIS MT",
+                                "RM A1.43, A1.01 & A1.36 BLOCK A"
+                        ],
+                        "E": [
+                                "DIG261S",
+                                "Digital Systems 2",
+                                "CALLAGHAN (ok)",
+                                "LECTUTURE THEAT"
+                        ],
+                        "F": [
+                                "OPS 260S",
+                                "Operating Systems 2",
+                                "WYNGAARD",
+                                "C-Room 1,2,3,4 GENCO"
+                        ]
+                }
+        },
+        "D2ENCX_Y0_A": {
+                "name": "D2ENCX - ComputerSystem",
+                "year": "Year 0",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "EPH150X",
+                                "Physics 1",
+                                "OPEOLU"
+                        ],
+                        "B": [
+                                "EPH150X",
+                                "Physics 1",
+                                "VICTOR"
+                        ],
+                        "C": [
+                                "COM152X",
+                                "Engineering Comm. 1",
+                                "HARTMAN"
+                        ],
+                        "D": [
+                                "EMA151X",
+                                "Engineering Mathematics 1",
+                                "MUSI (CALCULUS)"
+                        ],
+                        "E": [
+                                "CES150X",
+                                "Comp.Engineering Skills 1",
+                                "WYNGAARD",
+                                "OLD MASTERS /"
+                        ],
+                        "F": [
+                                "EMA151X",
+                                "Engineering Mathematics 1",
+                                "MHLONGO (ALGEBRA)"
+                        ]
+                }
+        },
+        "D2ETEX_Y0_A": {
+                "name": "D2ETEX - Electrical",
+                "year": "Year 0",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "COM155X",
+                                "Engineering Comm. 1",
+                                "MOHAMED"
+                        ],
+                        "B": [],
+                        "C": [
+                                "EPH151X",
+                                "Physics 1",
+                                "MCINGANI"
+                        ],
+                        "D": [
+                                "EPH151X",
+                                "Physics 1",
+                                "MCINGANI"
+                        ],
+                        "E": [
+                                "EMA154X",
+                                "Engineering Mathematics 1",
+                                "VICTOR (ALGEBRA)"
+                        ],
+                        "F": [
+                                "EMA154X",
+                                "Engineering Mathematics 1",
+                                "MUSI (CALCULUS)"
+                        ]
+                }
+        },
+        "D2ENCEX_Y1_A": {
+                "name": "D2ENCEX - Computer",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "ELE150X",
+                                "Engineering Principle 1",
+                                "MOFOKENG"
+                        ],
+                        "B": [
+                                "ELC150X",
+                                "Electrinics 1",
+                                "NGOBENI"
+                        ],
+                        "C": [],
+                        "D": [
+                                "ELE150X",
+                                "Engineering Principle 1",
+                                "MOFOKENG"
+                        ],
+                        "E": [
+                                "ELC150X",
+                                "Electronics",
+                                "NGOBENI"
+                        ],
+                        "F": [
+                                "SFD150X",
+                                "Software Development 1",
+                                "ADONIS"
+                        ]
+                }
+        },
+        "D2ETEX_Y1_A": {
+                "name": "D2ETEX - Electrical",
+                "year": "First Year",
+                "group": "A",
+                "slots": {
+                        "A": [],
+                        "B": [
+                                "ELE152X",
+                                "Electrical Engineering 1",
+                                "NTANJANA"
+                        ],
+                        "C": [
+                                "ELC152X",
+                                "Electronics 1",
+                                "ABRAHAMS"
+                        ],
+                        "D": [],
+                        "E": [],
+                        "F": [
+                                "EES150X",
+                                "Engineering Skills 1",
+                                "NTANJANA"
+                        ]
+                }
+        },
+        "BPETCP_Y3_A": {
+                "name": "BPETCP - Computer",
+                "year": "Third Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "DES 371S",
+                                "Industrial Computer Project 3",
+                                "BRANDT(S1) and ALIMAKTOOF(S2)"
+                        ],
+                        "B": [
+                                "ESS 370S",
+                                "Embedded Systems 3",
+                                "LUBBE"
+                        ],
+                        "C": [
+                                "DSS 370S",
+                                "Database System 3",
+                                "MOYO"
+                        ],
+                        "D": [],
+                        "E": [
+                                "NSS 370S",
+                                "Network Systems 3",
+                                "BRANDT"
+                        ],
+                        "F": [
+                                "COM 372S",
+                                "Electronic Communication 3",
+                                "BALYAN/PERIOLA"
+                        ]
+                }
+        },
+        "BPETEE_Y3_A": {
+                "name": "BPETEE - Electrical",
+                "year": "Third Year",
+                "group": "A",
+                "slots": {
+                        "A": [
+                                "DES 370S",
+                                "Industrial Design Project 3",
+                                "MNGUNI"
+                        ],
+                        "B": [
+                                "POW 370S",
+                                "Power Systems 3",
+                                "RATSHITANGA"
+                        ],
+                        "C": [],
+                        "D": [
+                                "COM 371S",
+                                "Electronic Communication 3",
+                                "PERIOLA/ BALYAN"
+                        ],
+                        "E": [
+                                "CSS 370S",
+                                "Control Systems 3",
+                                "DUBE"
+                        ],
+                        "F": [
+                                "ELM 370S",
+                                "Electrical Machines 3",
+                                "ROSE"
+                        ]
+                }
+        },
+        "BPETEE_Y3_C": {
+                "name": "BPETEE - Electrical",
+                "year": "Third Year",
+                "group": "C",
+                "slots": {
+                        "A": [
+                                "ELM 370S",
+                                "Electrical Machines 3",
+                                "ROSE"
+                        ],
+                        "B": [
+                                "DES 370S",
+                                "Industrial Design Project 3",
+                                "MNGUNI"
+                        ],
+                        "C": [],
+                        "D": [
+                                "CSS 370S",
+                                "Control Systems 3",
+                                "DUBE"
+                        ],
+                        "E": [
+                                "COM 371S",
+                                "Electronic Communication 3",
+                                "PERIOLA/ PERIOLA"
+                        ],
+                        "F": [
+                                "POW 370S",
+                                "Power Systems 3",
+                                "RATSHITANGA/KRISHNAMURTHY"
+                        ]
+                }
+        }
+}
+        ;
+        
+        const SCHEDULE = {
+            "MONDAY": ["B", "B", "BREAK", "C", "", "", "D", "D", "LUNCH", "A", "A", "A", "", "", ""],
+            "TUESDAY": ["C", "C", "BREAK", "E", "", "", "A", "A", "LUNCH", "B", "B", "B", "", "", ""],
+            "WEDNESDAY": ["E", "E", "BREAK", "B", "", "", "F", "F", "LUNCH", "D", "D", "D", "", "", ""],
+            "THURSDAY": ["D", "D", "BREAK", "A", "", "", "F", "F", "STAFF", "STAFF", "STAFF", "", "", "", ""],
+            "FRIDAY": ["F", "F", "F", "", "C", "", "C", "C", "LUNCH", "E", "E", "E", "", "", ""]
+        };
+        
+        const TIMES = [
+            "08:30-09:10", "09:10-09:50", "9:50-10:05", "10:05-10:45", "10:45-11:25", "",
+            "11:40-12:20", "12:20-13:00", "13:00-13:45", "13:45-14:30", "14:30-15:15", 
+            "15:15-16:00", "16:00-16:45", "", "16:30-20:30"
+        ];
+        
+        const PERIODS = ["1", "2", "BREAK", "3", "4", "", "5", "6", "LUNCH", "7", "8", "9", "10", "", "EVE"];
+        
+        function updateFields() {
+            const year = document.getElementById('yearSelect').value;
+            const fieldSelect = document.getElementById('fieldSelect');
+            const groupSelect = document.getElementById('groupSelect');
+            
+            fieldSelect.innerHTML = '<option value="">Select Field</option>';
+            groupSelect.innerHTML = '<option value="">Select Group</option>';
+            
+            if (!year) return;
+            
+            const fields = new Set();
+            for (let key in DATA) {
+                if (DATA[key].year === year) {
+                    fields.add(DATA[key].name);
+                }
+            }
+            
+            fields.forEach(field => {
+                const opt = document.createElement('option');
+                opt.value = field;
+                opt.textContent = field;
+                fieldSelect.appendChild(opt);
+            });
+        }
+        
+        function updateGroups() {
+            const year = document.getElementById('yearSelect').value;
+            const field = document.getElementById('fieldSelect').value;
+            const groupSelect = document.getElementById('groupSelect');
+            
+            groupSelect.innerHTML = '<option value="">Select Group</option>';
+            
+            if (!year || !field) return;
+            
+            for (let key in DATA) {
+                if (DATA[key].year === year && DATA[key].name === field) {
+                    const opt = document.createElement('option');
+                    opt.value = key;
+                    opt.textContent = 'Group ' + DATA[key].group;
+                    groupSelect.appendChild(opt);
+                }
+            }
+        }
+        
+        function loadTimetable() {
+            const progKey = document.getElementById('groupSelect').value;
+            if (!progKey) return;
+            
+            const prog = DATA[progKey];
+            const slots = prog.slots;
+            
+            let html = '<table><thead><tr><th class="day-header">DAY/TIME</th>';
+            
+            PERIODS.forEach((p, i) => {
+                html += `<th class="time-header">${TIMES[i]}<br>${p}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+            
+            for (let day in SCHEDULE) {
+                html += `<tr><td class="day-header"><strong>${day}</strong></td>`;
+                
+                SCHEDULE[day].forEach(slot => {
+                    if (slot === "BREAK") {
+                        html += '<td class="break-cell">BREAK</td>';
+                    } else if (slot === "LUNCH") {
+                        html += '<td class="break-cell">LUNCH</td>';
+                    } else if (slot === "STAFF") {
+                        html += '<td class="break-cell">STAFF<br>MEETING</td>';
+                    } else if (slot === "") {
+                        html += '<td class="break-cell"></td>';
+                    } else if (slots[slot] && slots[slot].length > 0) {
+                        html += `<td class="slot-${slot}">`;
+                        slots[slot].forEach(line => {
+                            if (line) {
+                                if (/\d{2,3}S/.test(line)) {
+                                    html += `<span class="course-code">${line}</span>`;
+                                } else if (/ROOM|LAB|GENCO|GOLDFIELD|MASTERS|COMP|BLOCK/i.test(line)) {
+                                    html += `<span class="room">${line}</span>`;
+                                } else if (line.toUpperCase() === line && line.length > 2 && !/ONLY/.test(line)) {
+                                    html += `<span class="lecturer">${line}</span>`;
+                                } else {
+                                    html += `<span class="course-name">${line}</span>`;
+                                }
+                            }
+                        });
+                        html += '</td>';
+                    } else {
+                        html += '<td></td>';
+                    }
+                });
+                
+                html += '</tr>';
+            }
+            
+            html += '</tbody></table>';
+            html += `<div class="footer">
+                <div>P = Practical | T = Tutorial</div>
+                <div>LAST UPDATE: 12 February 2026</div>
+                <div>GROUP ${prog.group} - ${prog.name.toUpperCase()}</div>
+            </div>`;
+            
+            document.getElementById('timetableArea').innerHTML = html;
+        }
+        
+        function downloadPDF() {
+            const element = document.getElementById('timetableArea');
+            const progKey = document.getElementById('groupSelect').value;
+            if (!progKey) {
+                alert('Please select a timetable first');
+                return;
+            }
+            
+            const prog = DATA[progKey];
+            const filename = `DEECE_${prog.name.replace(/\s/g,'_')}_${prog.year.replace(/\s/g,'_')}_Group_${prog.group}.pdf`;
+            
+            html2pdf().from(element).set({
+                margin: 0.5,
+                filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'a2', orientation: 'landscape' }
+            }).save();
+        }
+    </script>
+</body>
+</html>
