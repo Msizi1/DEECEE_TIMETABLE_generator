@@ -1,1 +1,0 @@
-# DEECEE_TIMETABLE_generator
